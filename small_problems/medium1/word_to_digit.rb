@@ -84,3 +84,7 @@ end
 
 str = 'Please call me at five five five one two three four. Thanks.'
 p word_to_digit(str) == 'Please call me at 5 5 5 1 2 3 4. Thanks.'
+
+# Further Exploration:
+# Change your solution so that the spaces between consecutive numbers are removed?
+

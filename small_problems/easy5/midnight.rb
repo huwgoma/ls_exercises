@@ -1,19 +1,18 @@
-# After Midnight (Part 1)
-# The time of day can be represented as the number of minutes before or after
-# midnight. If number of minutes is positive, time is AFTER midnight; if number
-# of minutes is negative, time is BEFORE midnight.
+# After Midnight, Part 1
+# The time of the day can be represented as the number of minutes before or after 
+# midnight. If the number of minutes is positive, it represents the number of 
+# minutes AFTER midnight; if the number of minutes is negative, it represents the
+# number of minutes BEFORE midnight.
 
-# Write a method that takes a time using this minute based format and 
-# returns the time of day in 24 hour format (hh:mm).
-#   Do not use Date or Time classes.
+# Write a method that takes an integer representing the number of minutes before
+# or after midnight, and returns the time of day in 24 hour format (hh:mm)
+# - Do not use Date or Time classes
 
-# Input: Integer (positive/negative/0), representing the number of minutes
-#   before (negative) or after (positive) midnight.
-
-# Output: A String representing the same time in 24-hour format.
-
-# Rules: 
-# -Do not use Date or Time classes; disregard Daylight Savings/Standard Time/etc.
+# Input:
+#   An integer representing the number of minutes before (negative) or 
+#   after (positive) midnight.
+# Output: 
+#   A String representing the time of day, in 24 hour format (0-23, 0-59) hh:mm
 
 # Examples:
 # time_of_day(0) == "00:00"
@@ -24,34 +23,46 @@
 # time_of_day(800) == "13:20"
 # time_of_day(-4231) == "01:29"
 
-# Data: 
-#   Integer (given) - number of minutes before/after midnight
-#   String (to be returned)
-#   Maybe two integers representing hour and minute (hh:mm)
-#   Number of minutes in a day -> 1440
+# Data:
+# The integer given as input - represents # of minutes before/after midnight.
+# - Divide the number of minutes into hours and minutes
+# - Also make sure we simplify the given number of minutes to a number less than
+#   or equal to the number of minutes in a single day (1440).
+# - If the number of minutes is negative, we can reach the same time by going 
+#   forward by 1440 - number of minutes instead.
+#   eg. 5 minutes before midnight is the same time as 23 hours and 55 minutes after
+#       midnight. 
+
 
 # Algorithm:
-# Given an Integer representing the number of minutes before/after midnight, minutes:
-#   Negative:
-#     Save the sign of minutes: -1 if negative, 1 otherwise
-#     If sign is negative, minutes is equivalent to the number of minutes
-#       in a day minus the given number of minutes
-#       eg. -3 is equivalent to 1440-3 (1437) (=> 12:57)
-#      So reassign minutes to minutes_in_day - minutes
+# Given an integer representing the # of minutes before/after midnight as input:
 
-#   Divide minutes into days first => days, remainder minutes
-#     Divide remainder minutes into hours and minutes.
-#       => hours, minutes
-#   Convert hours and minutes to a string, pad with 0 (to 2 chars), then
-#     return the string.    
+
+# Simplify the number of minutes to a single day:
+# - There are 1440 minutes in a day.
+# - Divide number of minutes (absolute) by 1440 
+#   => Number of days; remainder is the number of minutes before/after midnight.
+# If the given integer was negative, convert it to a positive:
+# - Subtract the absolute value of the midnight-relative minutes (from step 1) from
+#   1440 (the number of minutes in a day)
+# Divide the remaining number of minutes into hours and minutes.
+# - Divide number of minutes by 60 
+#   => Number of hours; remainder is the minutes portion of the time.
+
+# -4231 - Convert to minutes after midnight:
+# 4231.divmod(1440) => [2, 1351]
+# midnight_minutes is negative? yes.
+# - Convert to positive: 1440 - 1351 => 89
+# hours, minutes = 89.divmod(60) => [1, 29]
 
 MINUTES_IN_DAY = 1440
 MINUTES_IN_HOUR = 60
 
-def time_of_day(minutes)
-  minutes = minutes % MINUTES_IN_DAY
-  hours, minutes = minutes.divmod(MINUTES_IN_HOUR)
-  "#{format('%02d', hours)}:#{format('%02d', minutes)}"
+def time_of_day(total_minutes)
+  midnight_minutes = total_minutes.abs % MINUTES_IN_DAY
+  midnight_minutes = MINUTES_IN_DAY - midnight_minutes if total_minutes.negative?
+  hours, minutes = midnight_minutes.divmod(MINUTES_IN_HOUR)
+  format('%02d:%02d', hours, minutes)
 end
 
 p time_of_day(0) == "00:00"
@@ -62,8 +73,4 @@ p time_of_day(3000) == "02:00"
 p time_of_day(800) == "13:20"
 p time_of_day(-4231) == "01:29"
 
-# Further Exploration
-# Using Ruby Date/Time classes
 
-# Given an input integer representing the number of minutes before/after midnight:
-# 

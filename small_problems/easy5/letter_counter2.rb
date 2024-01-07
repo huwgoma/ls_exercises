@@ -1,3 +1,39 @@
+# Letter Counter 2
+# Given the method from Letter Counter 1:
+
+# def word_sizes(str)
+#   str.split.each_with_object(Hash.new(0)) do |word, size_counts|
+#     size_counts[word.length] += 1
+#   end
+# end
+
+# Modify the method to exclude non-letters when calculating word size.
+# eg. "it's" is 3 letters, not 4.
+
+# Algorithm:
+# Given a string as input, str:
+# Split str into words on spaces.
+# Iterate over words. For each word:
+#   Create a copy of the current word, but with all non-alphabetic characters
+#   removed.
+#   String#delete method: Returns a copy of the calling string with all specified
+#     characters removed.
+#   - '^a-z': Remove characters that are NOT a-z
+
+def word_sizes(str)
+  str.split.each_with_object(Hash.new(0)) do |word, size_counts|
+    size_counts[word.delete('^a-zA-Z').length] += 1
+  end
+end
+
+p word_sizes('Four score and seven.') == { 3 => 1, 4 => 1, 5 => 2 }
+p word_sizes('Hey diddle diddle, the cat and the fiddle!') == { 3 => 5, 6 => 3 }
+p word_sizes("What's up doc?") == { 5 => 1, 2 => 1, 3 => 1 }
+p word_sizes('') == {}
+
+
+
+
 # Letter Counter (Part 2)
 # Modify the method from Letter Counter Part 1 to exclude non-letters when
 #   calculating word size.

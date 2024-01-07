@@ -1,58 +1,56 @@
 # Reversed Arrays (Part 1)
+# Write a method that takes an Array as an argument and reverses its elements in
+# place (ie. it mutates the given array, then returns the same array object)
+# - Do not use #reverse/#reverse!
 
-=begin
-Write a method that takes an Array as an argument and reverses its element in place
-(Mutate the argument Array and return that same array)
-- Do not use #reverse or #reverse!
+# Input: An array containing whatever elements
+# Output: The same array object with elements in reverse order
 
-Input: 
-  An Array containing whatever elements
-Output: 
-# The same Array but with its elements reversed
+# Examples:
+# list = [1,2,3,4]
+# result = reverse!(list)
+# p result == [4, 3, 2, 1] # true
+# p list == [4, 3, 2, 1] # true
+# p list.object_id == result.object_id # true
 
-Examples:
-  list = [1,2,3,4]
-  result = reverse!(list)
-  result == [4, 3, 2, 1] # true
-  list == [4, 3, 2, 1] # true
-  list.object_id == result.object_id # true
+# list = %w(a b e d c)
+# p reverse!(list) == ["c", "d", "e", "b", "a"] # true
+# p list == ["c", "d", "e", "b", "a"] # true
 
-  list = %w(a b e d c)
-  reverse!(list) == ["c", "d", "e", "b", "a"] # true
-  list == ["c", "d", "e", "b", "a"] # true
+# list = ['abc']
+# p reverse!(list) == ["abc"] # true
+# p list == ["abc"] # true
 
-  list = ['abc']
-  reverse!(list) == ["abc"] # true
-  list == ["abc"] # true
+# list = []
+# p reverse!(list) == [] # true
+# p list == [] # true
 
-  list = []
-  reverse!(list) == [] # true
-  list == [] # true
+# Data:
+# The array given as input
+# - For any array of size n, we only need to perform n / 2 (round down) swaps.
+# eg. For an array of size 7, we only need to perform 3 swaps.
+# [1, 2, 3, 4, 5, 6, 7]
+# => [7, 2, 3, 4, 5, 6, 1] => [7, 6, 3, 4, 5, 2, 1] => [7, 6, 5, 4, 3, 2, 1]
 
-Data: 
-  The Array given as input; also the same array we will mutate and return
+# eg. For an array of size 6, we only need to perform 3 swaps.
+# [1, 2, 3, 4, 5, 6]
+# => [6, 2, 3, 4, 5, 1] => [6, 5, 3, 4, 2, 1] => [6, 5, 4, 3, 2, 1]
 
-Algorithm:
-# Given an Array of elements, array:
-# Initialize a loop and counter = 0; for each loop:
-#   Swap the element at index counter and the element at the other end of the arr
-#     "other end" -> arr[0] and arr[-1]; arr[1] and arr[-2]; etc.
-#   Increment counter by 1
-#   Break the loop if counter >= array size / 2 (check this first tho)
-# return array
+# Algorithm:
+# Given an array as input:
+# Determine how many swaps we need (n = array size divided by 2)
+# Loop n times. For each loop, i = 0:
+#   Swap the elements at index i and index -i - 1
+# Return array
 
-
-=end
 def reverse!(array)
-  counter = 0
-  until counter >= array.size / 2
-    end_index = -counter - 1
-    array[counter], array[end_index] = array[end_index], array[counter]
-    counter += 1 
+  swaps_needed = array.size / 2
+  swaps_needed.times do |index|
+    tail_index = -index - 1
+    array[index], array[tail_index] = array[tail_index], array[index]
   end
   array
 end
-
 
 list = [1,2,3,4]
 result = reverse!(list)
@@ -71,3 +69,4 @@ p list == ["abc"] # true
 list = []
 p reverse!(list) == [] # true
 p list == [] # true
+
