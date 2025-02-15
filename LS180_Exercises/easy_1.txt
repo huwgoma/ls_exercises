@@ -1,0 +1,57 @@
+Easy 1
+
+#1
+  CREATE DATABASE animals;
+
+#2
+  CREATE TABLE birds(
+    id serial PRIMARY KEY,
+    name varchar(25),
+    age integer,
+    species varchar(15)
+  );
+
+#3
+  INSERT INTO birds (name, age, species)
+  VALUES ('Charlie', 3, 'Finch'),
+  ('Allie', 5, 'Owl'),
+  ('Jennifer', 3, 'Magpie'),
+  ('Jamie', 4, 'Owl'),
+  ('Roy', 8, 'Crow');
+## Further Exploration: If the column names are omitted, values will be
+   inserted into the table from left-to-right.
+
+#4
+  SELECT * FROM birds;
+## Note: You can group columns together into parentheses.
+    ie.  SELECT (name, age, species) FROM birds;
+    Which will return the values in the grouped columns aggregated under one column.
+
+#5 
+  SELECT * FROM birds WHERE age < 5;
+
+#6
+  UPDATE birds
+  SET species = 'Raven'
+  WHERE species = 'Crow';
+
+  UPDATE birds 
+  SET species = 'Hawk'
+  WHERE name = 'Jamie';
+
+#7
+  DELETE FROM birds
+  WHERE age = 3 AND species = 'Finch';
+
+#8
+  ALTER TABLE birds
+  ADD CONSTRAINT positive_age_constraint CHECK(age >= 0);
+
+  INSERT INTO birds (name, age, species)
+  VALUES ('Alan', -2, 'Blue Jay');
+
+#9 
+  DROP TABLE birds;
+
+#10
+  dropdb animals
