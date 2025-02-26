@@ -1,0 +1,166 @@
+-- stars 
+  -- id: unique, serial, auto-incrementing integer; PRIMARY KEY
+  -- name: string up to 25 characters; UNIQUE, NOT NULL
+  -- distance (light years): integer; NOT NULL, greater than 0
+  -- spectral_type: string of 1 character; O, B, A, F, G, K, or M
+  -- companions (stars): integer; NOT NULL, not negative
+
+-- planets
+  -- id: unique, serial, auto-incrementing integer; PRIMARY KEY
+  -- designation: a single character that UNIQUEly identifies the planet 
+                  within its solar system (a, b, c, etc.)
+  -- mass: estimated mass relative to Jupiter (integer)
+
+
+#1 ----------------------------------------------------------------
+createdb extrasolar
+
+psql extrasolar
+
+CREATE TABLE stars (
+  id serial PRIMARY KEY,
+  name varchar(25) UNIQUE NOT NULL,
+  distance integer NOT NULL CHECK(distance > 0),
+  spectral_type char(1) CHECK(spectral_type IN ('O', 'B', 'A', 'F', 'G', 'K', 'M')),
+  companions integer NOT NULL CHECK(companions >= 0)
+);
+
+CREATE TABLE planets (
+  id serial PRIMARY KEY,
+  designation char(1) UNIQUE,
+  mass integer
+);
+
+
+#2 ----------------------------------------------------------------
+-- A star can have many planets; a planet has one star
+-- (star)-|---<(planet)
+
+ALTER TABLE planets
+ADD COLUMN star_id integer NOT NULL REFERENCES stars;
+
+
+#3 ----------------------------------------------------------------
+-- Modify stars.name to allow up to 50 characters.
+
+ALTER TABLE stars
+ALTER COLUMN name TYPE varchar(50);
+
+-- Further Exploration
+--  The ALTER TABLE command above will run successfully, even if data already exists 
+--  within the stars table, because we are increasing the length constraint from 25 to
+--  50. Therefore, any names that exist in the table must be less than 25, and by 
+--  extension, less than 50.
+
+
+#4 ----------------------------------------------------------------
+-- Modify stars.distance to allow fractional light years, to any degree of precision.
+-- ie. numeric, with no specified precision
+
+ALTER TABLE stars
+ALTER distance TYPE numeric;
+
+-- Further Exploration
+--  The ALTER TABLE command above will run successfully, as we are changing the data
+--  type from integer to unconstrained numeric, which also allows integers to be inserted.
+--  Additionally, even if we were changing the data type to a constrained numeric, the
+--  existing values would be coerced to the new type, if possible. For example, if the 
+--  data type were changed to numeric(4, 1), an existing integer 9 would be coerced to
+--  the value 9.0.
+
+
+#5 ----------------------------------------------------------------
+-- Add a constraint to stars.spectral_type that enforces the value to be both
+-- present (NOT NULL) and in the set O/B/A/F/G/K/M.
+
+ALTER TABLE stars
+ADD CHECK(spectral_type IN('O', 'B', 'A', 'F', 'G', 'K', 'M')),
+ALTER spectral_type SET NOT NULL;
+
+-- Further Exploration
+--  If the stars table contains some rows with a NULL or invalid spectral_type value,
+--  the ALTER TABLE command above will fail, since one or more values would violate 
+--  the new constraints.
+--  One possible workaround to this would be to first update the data to comply with
+--  both constraints, then update the table schema to add the new constraints.
+
+
+#6 ----------------------------------------------------------------
+-- Enumerated Types 
+--  PostgreSQL provides the ability to create custom data types that accept one of
+--  a pre-defined set of values; for example, a custom data type 'traffic_light' 
+--  could accept the values 'green', 'red', and 'yellow'.
+--  eg. CREATE TYPE traffic_light AS ENUM ('green', 'yellow', 'red');
+
+CREATE TYPE spectral AS ENUM('O', 'B', 'A', 'F', 'G', 'K', 'M');
+
+ALTER TABLE stars
+DROP CONSTRAINT stars_spectral_type_check,
+ALTER spectral_type TYPE spectral USING spectral_type::spectral;
+
+
+#7 ----------------------------------------------------------------
+-- Update planets.mass to accept numeric values of any precision degree and enforce 
+-- a positive, non-null value.
+-- Also update planets.designation so that it requires a value.
+
+ALTER TABLE planets 
+ALTER mass TYPE numeric,
+ALTER mass SET NOT NULL, 
+ADD CONSTRAINT positive_mass CHECK(mass > 0),
+ALTER designation SET NOT NULL;
+
+
+#8 ----------------------------------------------------------------
+-- Add a planets.semi_major_axis column (the average distance from the
+-- planet's star, measured in astronomical units.)
+--  This column should be numeric and NOT NULL.
+
+ALTER TABLE planets
+ADD COLUMN semi_major_axis numeric NOT NULL;
+
+-- Further Exploration
+--  If the planets table already contains rows, the ALTER TABLE command will fail,
+--  as the values under the newly-added semi_major_axis column would be filled with
+--  NULL, thus violating the column's NOT NULL constraint.
+--  One possible workaround for this problem is to add the column without the 
+--  NOT NULL constraint, insert valid values into each row, and then add the NOT NULL
+--  constraint afterwards.
+
+ALTER TABLE planets
+ADD COLUMN semi_major_axis numeric;
+
+UPDATE planets
+SET semi_major_axis = 0.04 WHERE id = 1   -- Alpha Centauri B
+SET semi_major_axis = 40 WHERE id = 2     -- Epsilon Eridani C
+
+ALTER TABLE planets
+ALTER semi_major_axis SET NOT NULL;
+
+
+#9 ----------------------------------------------------------------
+-- Add a moons table to the extrasolar database:
+--  id: unique, auto-incrementing integer (PRIMARY KEY)
+--  designation: integer (required, unique)
+--  semi_major_axis: numeric greater than 0 (not required)
+--  mass: numeric greater than 0, not required
+-- FOREIGN KEYs: 
+--  moons belong to a planet; therefore, planet_id -> planets
+
+CREATE TABLE moons (
+  id serial PRIMARY KEY,
+  planet_id integer NOT NULL REFERENCES planets,
+  designation integer UNIQUE NOT NULL CHECK(designation > 0),
+  semi_major_axis numeric CHECK(semi_major_axis > 0),
+  mass numeric CHECK(mass > 0)
+);
+
+
+#10 ----------------------------------------------------------------
+-- Create a backup of the extrasolar database, then delete it from psql.
+
+pg_dump extrasolar -f extrasolar.sql
+
+psql -- hugo=#
+
+DROP DATABASE extrasolar;
