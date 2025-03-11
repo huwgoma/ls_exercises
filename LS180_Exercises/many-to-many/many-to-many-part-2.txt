@@ -1,0 +1,82 @@
+#1 -------------------------------------------------------------
+Write a query to compute the total gross income expected in the next payment.
+Assume that every customer will pay their bills on time.
+-- Join services and c-s table (inner; only the services with at least one customer)
+-- Each entry in c-s represents one customer-service transaction; therefore, simply
+-- sum the joined prices to get the gross income.
+
+SELECT SUM(price) AS gross
+FROM services 
+INNER JOIN customers_services ON services.id = service_id;
+
+
+
+#2 -------------------------------------------------------------
+Add a new customer to the database:
+- name: John Doe    - payment token: EYODHLCN
+- services: Unix hosting, DNS, whois registration.
+
+INSERT INTO customers (name, payment_token)
+VALUES ('John Doe', 'EYODHLCN');
+
+INSERT INTO customers_services (customer_id, service_id)
+VALUES(7, 1), (7, 2), (7, 3);
+
+
+
+#3 -------------------------------------------------------------
+Write two SQL queries to return the following values:
+- The CURRENT amount of expected income from 'big ticket' services 
+  (ie. income from customers subscribed to services with price > 100)
+- The maximum possible income if all customers each subscribed to all of the big
+  ticket services.
+
+-- Current Big Ticket Income:
+--  Join services and customers_services (inner join)
+--  Remove any rows where price is 100 or less
+--  select and sum the remaining rows prices
+
+SELECT SUM(price)
+FROM services JOIN customers_services ON services.id = service_id
+WHERE price > 100;
+
+-- Potential Big Ticket Income: If every customer bought all big services
+--  Count the number of customers in the database
+--  Calculate the sum of the big ticket services 
+--  Multiply # of customers by big ticket service sum.
+
+(Intended Solution)
+SELECT SUM(price)
+FROM customers CROSS JOIN services
+WHERE price > 100;
+
+(How I did it)
+SELECT (SELECT COUNT(id) FROM customers) * (SELECT SUM(price) FROM services WHERE price > 100);
+
+-- Further Exploration: Can you think of another use case for a cross join?
+-- CROSS JOINs create a Cartesian Product from the given tables (ie. all possible
+--  combinations of rows). Examples where this could be useful include generating
+--  a deck of cards (from suits and ranks), or viewing all possible menu item 
+--  combinations, etc.
+
+
+
+#4 -------------------------------------------------------------
+Write the necessary SQL statements to delete the "Bulk Email" service and the
+customer "Chen Ke-Hua" from the database.
+- The customer_id foreign key has an ON DELETE CASCADE clause, which will
+  automatically delete any associated entries in customer_services when a customer
+  is deleted.
+- The service_id does NOT have an ON DELETE clause; PostgreSQL's default behavior
+  is to reject the deletion of a row if there are any rows referencing it. Therefore,
+  if we want to delete the Bulk Email service (id = 7), then we first need to remove
+  any entries in customers_services with service_id = 7.
+
+DELETE FROM customers
+WHERE name = 'Chen Ke-Hua';
+
+DELETE FROM customers_services
+WHERE service_id IN (SELECT id FROM services WHERE description = 'Bulk Email');
+
+DELETE FROM services
+WHERE description = 'Bulk Email';

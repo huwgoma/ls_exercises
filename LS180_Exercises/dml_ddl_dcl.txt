@@ -1,0 +1,67 @@
+#1 
+  DCL (Data Control Language) - used to define the permission levels for users
+  accessing a database.
+  eg. GRANT, REVOKE, etc.
+
+  DDL (Data Definition Language) - used to define the schema (structure) of a 
+  database and its tables.
+  eg. CREATE DATABASE, CREATE TABLE, ALTER TABLE, etc.
+
+  DML (Data Manipulation Language) - used to access and manipulate the data
+  (contents) of a database.
+  eg. SELECT, INSERT, UPDATE, DELETE
+
+#2
+  SELECT column_name FROM my_table;
+  - This statement uses the DML component of SQL; it is concerned with retrieving
+  the contents (rather than the structure) of the database. 
+
+#3 
+  CREATE TABLE things (
+    id serial PRIMARY KEY,
+    item text NOT NULL UNIQUE,
+    material text NOT NULL
+  );
+  - This statement uses the DDL component of SQL; it is concerned with altering the
+  structure of the database by creating a new table.
+
+#4 
+  ALTER TABLE things
+  DROP CONSTRAINT things_item_key;
+  - This statement uses the DDL component of SQL; it is concerned with altering
+  the database's structure by altering the behavior of an existing table.
+
+#5
+  INSERT INTO things VALUES (3, 'Scissors', 'Metal');
+  - This statement uses the DML component of SQL; it is concerned with inserting
+  new data into a database table, and does not affect the database's structure.
+
+#6 
+  UPDATE things
+  SET material = 'plastic'
+  WHERE item = 'Cup';
+  - This statement uses the DML component of SQL; it is concerned with updating
+  one or more existing rows of data in the things table, and does not affect the
+  structure or behavior of the table itself.
+
+#7
+  \d things
+  - This statement is not technically part of SQL, as it is a psql meta-command.
+
+#8
+  DELETE FROM things WHERE item = 'Cup';
+  - This statement uses the DML component of SQL - it is concerned with deleting 
+  one or more existing rows of data in the things table, and does not affect the
+  structure or behavior of the table itself.
+
+#9 
+  DROP DATABASE xyzzy;
+  - This statement uses the DDL component of SQL. While the database's data is
+  also deleted, the purpose of the statement is to delete the database itself; the
+  data being deleted is a side-effect of its hosting database being deleted.
+
+#10
+  CREATE SEQUENCE part_number_sequence;
+  - This statement uses the DDL component of SQL. Sequences are generally used to
+  define auto-incrementing identifier columns when creating a table, which result
+  in the table's behavior being altered, as opposed to any specific data entry.

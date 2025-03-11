@@ -1,0 +1,115 @@
+
+#1 --------------------------------------------------------------
+-- Write a query to retrieve the customer data for every customer who 
+-- is subscribed to at least one service.
+
+SELECT * FROM customers
+WHERE id IN (SELECT customer_id FROM customers_services);
+
+SELECT DISTINCT customers.* 
+FROM customers
+JOIN customers_services ON customers.id = customers_services.customer_id;
+
+
+#2 --------------------------------------------------------------
+-- Write a query to retrieve the customer data for every customer who does 
+-- not have any service subscriptions.
+
+SELECT * FROM customers
+WHERE id NOT IN (SELECT customer_id FROM customers_services);
+
+-- Further Exploration: Write a query that displays all customers with no 
+--  services, along with all services without customers.
+
+SELECT customers.*, services.* 
+FROM customers
+FULL JOIN customers_services ON customers.id = customers_services.customer_id
+FULL JOIN services           ON services.id = customers_services.service_id
+WHERE customers.id IS NULL OR services.id IS NULL;
+
+
+#3 --------------------------------------------------------------
+-- Write a query to display a list of all services that are not currently in use.
+-- Use a RIGHT JOIN for this (not a subquery).
+
+SELECT services.description 
+FROM customers_services 
+RIGHT JOIN services ON services.id = customers_services.service_id
+WHERE service_id IS NULL;
+
+
+#4 --------------------------------------------------------------
+-- Write a query to display a list of all customer names, along with a comma-
+-- separated list of the services they are subscribed to.
+  
+  - Join customers and services together (via c-s)
+  - Get ALL customers 
+  - group by name
+  - for each name, aggregate their services together into a string.
+
+SELECT customers.name, string_agg(services.description, ', ') AS services
+FROM customers
+LEFT JOIN customers_services AS cs ON customers.id = cs.customer_id
+LEFT JOIN services                 ON services.id = cs.service_id
+GROUP BY customers.id
+ORDER BY customers.id;
+
+-- Further Exploration: Modify the command above to produce the following output:
+     name      |    description
+---------------+--------------------
+ Chen Ke-Hua   | High Bandwidth
+               | Unix Hosting
+ Jim Pornot    | Dedicated Hosting
+               | Unix Hosting
+               | Bulk Email
+ Lynn Blake    | Whois Registration
+               | High Bandwidth
+               | Business Support
+               | DNS
+               | Unix Hosting
+ Nancy Monreal |
+ Pat Johnson   | Whois Registration
+               | DNS
+               | Unix Hosting
+ Scott Lakso   | DNS
+               | Dedicated Hosting
+               | Unix Hosting
+(17 rows)
+
+-- SQL's LAG function returns the value located n row(s) before the current row,
+-- based on the defined offset n (default 1)
+
+-- Algorithm:
+--  Join customers and services (via c-s), LEFT join (take all customers)
+--  Select name from customers, description from services  
+--?   If customers name is equal to the previous customer name (previous record),
+--    select null instead of customer name ?  
+
+SELECT 
+  CASE WHEN LAG(customers.name) OVER (ORDER BY customers.name) = customers.name
+    THEN NULL
+  ELSE customers.name END,
+  services.description
+FROM customers 
+LEFT JOIN customers_services AS cs ON customers.id = cs.customer_id
+LEFT JOIN services                 ON services.id = cs.service_id
+ORDER BY customers.name;
+
+
+
+#5 --------------------------------------------------------------
+Write a query that displays the description for every service that has at least 
+3 current customers. Include the customer count for each service.
+
+-- Join services to c-s (inner join, since you only want 
+--  records where an intersection is present (3+))
+-- Select description from services.
+-- Group by services.description. For each service, count the number of 
+--  customer ids present in c-s.
+-- Filter out any records where count is not at least 3 or more.
+
+SELECT description, COUNT(customer_id)
+FROM services
+INNER JOIN customers_services ON services.id = service_id
+GROUP BY description
+HAVING COUNT(customer_id) >= 3;
