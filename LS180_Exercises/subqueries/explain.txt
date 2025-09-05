@@ -1,0 +1,130 @@
+#7 --------------------------------------
+Use EXPLAIN to estimate the performance of the following SQL statement:
+SELECT name FROM bidders 
+WHERE EXISTS (SELECT 1 FROM bids WHERE bidders.id = bidder_id);
+
+ 
+  EXPLAIN SELECT name FROM bidders
+  WHERE EXISTS (SELECT 1 FROM bids WHERE bidders.id = bidder_id);
+
+                                QUERY PLAN                               
+-----------------------------------------------------------------------
+  Hash Join  (cost=1.46..27.56 rows=6 width=32)
+   Hash Cond: (bidders.id = bids.bidder_id)
+   ->  Seq Scan on bidders  (cost=0.00..22.70 rows=1270 width=36)
+   ->  Hash  (cost=1.39..1.39 rows=6 width=4)
+         ->  HashAggregate  (cost=1.32..1.39 rows=6 width=4)
+               Group Key: bids.bidder_id
+               ->  Seq Scan on bids  (cost=0.00..1.26 rows=26 width=4)
+(7 rows)
+
+  Each row of output represents a constituent database operation:
+    eg. Hash Join  (cost=1.46..27.56 rows=6 width=32)
+    - Hash Join represents the name of the operation 
+    - cost=1.46..27.56 represents the estimated performance of the operation.
+      - The first number represents the estimated startup cost (ie. how long until
+        the first row is returned)
+      - The second number represents the estimated total cost (ie. how long until
+        all rows are returned)
+    - rows=6 represents the estimated number of rows returned by the operation
+    - width=32 represents the estimated number of bytes that the returned rows 
+      will occupy. 
+  - Note that EXPLAIN will not actually execute the given query.
+
+
+  EXPLAIN ANALYZE SELECT name FROM bidders
+  WHERE EXISTS (SELECT 1 FROM bids WHERE bidders.id = bidder_id);
+
+                                                     QUERY PLAN                                                    
+------------------------------------------------------------------------------------------------------------------
+ Hash Join  (cost=1.46..27.56 rows=6 width=32) 
+ (actual time=0.029..0.032 rows=6 loops=1)
+   Hash Cond: (bidders.id = bids.bidder_id)
+   ->  Seq Scan on bidders  (cost=0.00..22.70 rows=1270 width=36) 
+   (actual time=0.005..0.006 rows=7 loops=1)
+   ->  Hash  (cost=1.39..1.39 rows=6 width=4) 
+   (actual time=0.020..0.020 rows=6 loops=1)
+         Buckets: 1024  Batches: 1  Memory Usage: 9kB
+         ->  HashAggregate  (cost=1.32..1.39 rows=6 width=4) 
+         (actual time=0.017..0.018 rows=6 loops=1)
+               Group Key: bids.bidder_id
+               Batches: 1  Memory Usage: 24kB
+               ->  Seq Scan on bids  (cost=0.00..1.26 rows=26 width=4) 
+               (actual time=0.003..0.007 rows=26 loops=1)
+ Planning Time: 0.105 ms
+ Execution Time: 0.053 ms
+(11 rows)
+
+  Most of the output returned by EXPLAIN ANALYZE is the same as EXPLAIN's, with 
+  one key addition - the actual performance metrics obtained from executing the query.
+    eg. Hash Join (cost=1.46..27.56 rows=6 width=32) (actual time=0.029..0.032 rows=6 loops=1)
+    - actual_time=0.029..0.032 represents the actual time taken (in milliseconds)
+    to execute this portion of the query.
+    -rows=6 represents the actual number of rows returned by this operation.
+  
+  - Note that EXPLAIN ANALYZE will actually execute the given query. If you want to
+    use EXPLAIN ANALYZE with database-altering commands (ie. UPDATE, INSERT, or
+    DELETE), it can be a good idea to wrap the transaction in a BEGIN-COMMIT/ROLLBACK
+    statement:
+
+    BEGIN;
+    EXPLAIN ANALYZE ...;
+    ROLLBACK;
+
+
+
+#8 --------------------------------------
+Which statement is more efficient? Why? Include comparisons of the planning time,
+execution time, and total time required.
+
+EXPLAIN ANALYZE SELECT MAX(bid_counts.count) FROM
+(SELECT COUNT(bidder_id) FROM bids GROUP BY bidder_id) AS bid_counts;
+
+  (cost=1.52..1.53 rows=1 width=8) (actual time=0.024..0.025 rows=1 loops=1)
+  Planning Time: 0.063 ms
+  Execution Time: 0.046 ms
+
+
+EXPLAIN ANALYZE SELECT COUNT(bidder_id) AS max_bid FROM bids
+GROUP BY bidder_id
+ORDER BY max_bid DESC
+LIMIT 1;
+
+  (cost=1.48..1.48 rows=1 width=12) (actual time=0.034..0.035 rows=1 loops=1)
+  Planning Time: 0.079 ms
+  Execution Time: 0.054 ms
+
+The first statement is slightly more efficient; it runs faster (by about 0.01ms),
+and it also takes less time to both plan and execute (by about 0.016 and 0.008ms,
+respectively.)
+
+- However, the perceived cost of the second statement is slightly lower:
+  - The first statement uses an aggregate function, while the second statement 
+    uses ORDER BY and LIMIT to sort and then stop sorting the results.
+  - ORDER BY and LIMIT are less expensive when it comes to system resources, but
+    are more time-consuming than aggregate functions.
+
+
+-- Further Exploration: Compare the performance of using a scalar subquery vs. 
+   using a LEFT JOIN.
+
+EXPLAIN ANALYZE SELECT name, (SELECT COUNT(id) FROM bids WHERE item_id = items.id)
+FROM items;
+
+  (cost=0.00..1204.60 rows=880 width=40) (actual time=0.031..0.064 rows=6 loops=1)
+  Planning Time: 0.071 ms
+  Execution Time: 0.081 ms
+
+
+EXPLAIN ANALYZE SELECT items.name, COUNT(item_id)
+FROM items 
+LEFT JOIN bids ON items.id = item_id
+GROUP BY items.id ORDER BY items.id;
+
+  (cost=2.02..79.01 rows=880 width=44) (actual time=0.026..0.042 rows=6 loops=1)
+  Planning Time: 0.095 ms
+  Execution Time: 0.064 ms
+
+The scalar subquery statement seems to have a similar execution speed to the JOIN
+statement (if not a little slower), and it also seems to have a much higher cost 
+of execution compared to the JOIN statement.

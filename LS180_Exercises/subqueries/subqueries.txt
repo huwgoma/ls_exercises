@@ -1,0 +1,70 @@
+#2 -----------------------------------------------
+Write an SQL query to retrieve all items with bids on them. 
+- Use the subquery expression IN for this exercise.
+
+  SELECT name AS "Bid on Items" FROM items
+  WHERE id IN (SELECT item_id FROM bids);
+
+
+
+#3 ------------------------------------------------
+Write an SQL query to retrieve all items without bids on them, using NOT IN.
+
+  SELECT name AS "Not Bid On" FROM items
+  WHERE id NOT IN (SELECT DISTINCT item_id FROM bids);
+
+
+
+#4 -------------------------------------------------
+Write a query to retrieve the names of everyone who has placed at least one bid.
+- Use the EXISTS subquery expression.
+
+  SELECT name FROM bidders
+  WHERE EXISTS(SELECT 1 FROM bids WHERE bidder_id = bidders.id);
+
+-- Further Exploration: Write a SELECT query with a JOIN clause that returns the
+                        same output as above.
+
+  SELECT bidders.name FROM bidders
+  JOIN bids ON bidders.id = bidder_id
+  GROUP BY bidders.id ORDER BY bidders.id;
+
+
+
+#4 ---------------------------------------------------
+Write an SQL query to retrieve the largest number of bids from an individual 
+bidder. Use a subquery to generate a transient result table, then query that table.
+
+  SELECT MAX(bid_count) FROM 
+    ( SELECT COUNT(id) AS bid_count 
+      FROM bids GROUP BY bidder_id
+    ) AS bids_per_person;
+
+
+
+#5 ---------------------------------------------------
+Use a scalar subquery to determine the name and number of bids on each item.
+- A scalar subquery is a parenthesized SELECT query that returns exactly one value 
+  (ie. one row and one column).
+
+  SELECT name, (SELECT COUNT(id) FROM bids WHERE item_id = items.id)
+  FROM items;
+
+-- Further Exploration: Write a query that returns the same results using a JOIN.
+  SELECT items.name, COUNT(item_id)
+  FROM items 
+  LEFT JOIN bids ON items.id = item_id
+  GROUP BY items.id ORDER BY items.id;
+
+
+
+#6 ---------------------------------------------------
+Write a query to display the id for the item that matches the following data, but
+does not use the AND keyword.
+('Painting', 100.00, 250.00)
+  - Using row constructors and row constructor comparisons:
+    - Row constructors return a row's values as a single parenthesized value;
+      row constructor comparisons compare two constructed rows.
+  
+  SELECT id FROM items
+  WHERE ROW(name, initial_price, sales_price) = ROW('Painting', 100.00, 250.00);
